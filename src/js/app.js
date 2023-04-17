@@ -5,8 +5,8 @@ App = {
   init: async function () {
     // Load pets.
     $.getJSON("../pets.json", function (data) {
-      var petsRow = $("#petsRow");
-      var petTemplate = $("#petTemplate");
+      const petsRow = $("#petsRow");
+      const petTemplate = $("#petTemplate");
 
       for (i = 0; i < data.length; i++) {
         petTemplate.find(".panel-title").text(data[i].name);
@@ -98,11 +98,31 @@ App = {
   handleAdopt: function (event) {
     event.preventDefault();
 
-    var petId = parseInt($(event.target).data("id"));
+    const petId = parseInt($(event.target).data("id"));
 
-    /*
-     * Replace me...
-     */
+    let adoptionInstance;
+
+    web3.eth.getAccounts(function (error, accounts) {
+      if (error) {
+        console.log(error);
+      }
+
+      const account = accounts[0];
+
+      App.contracts.Adoption.deployed()
+        .then(function (instance) {
+          adoptionInstance = instance;
+
+          // Execute adopt as a transaction by sending account
+          return adoptionInstance.adopt(petId, { from: account });
+        })
+        .then(function (result) {
+          return App.markAdopted();
+        })
+        .catch(function (err) {
+          console.log(err.message);
+        });
+    });
   },
 };
 
